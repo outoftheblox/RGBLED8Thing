@@ -40,8 +40,7 @@ void setup()
 
     thing.begin();
 
-    String topic = "things/" + thing.clientId() + "/rgbled/color";
-    thing.addActuator(topic, [](Value& value){
+    thing.addActuator("things/" + thing.clientId() + "/rgbled/color", [](Value& value){
         state = (bool)value;
         StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
         String msg = value;
@@ -55,14 +54,35 @@ void setup()
         int r = root["r"];
         int g = root["g"];
         int b = root["b"];
-        Serial.println(r);
-        Serial.println(g);
-        Serial.println(b);
         for (int i = 0 ; i < NUM_LEDS ; ++i)
         {
             pixels.setPixelColor(i, pixels.Color(r, g, b));
             pixels.show();
-            delay(50);
+            delay(100);
+        }
+        Serial.println("Got:" + String(value));
+        //thing.publish(thing.clientId() + "/rbgled/color", value);
+        return true;
+    });
+
+    thing.addActuator("things/" + thing.clientId() + "/rgbled/colors", [](Value& value){
+        state = (bool)value;
+        StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+        String msg = value;
+        JsonArray& array = jsonBuffer.parseArray(msg);
+        if (!array.success()) {
+            Serial.println("parseObject() failed");
+            return false;
+        }
+        for (int i = 0 ; i < NUM_LEDS ; ++i)
+        {
+            JsonObject& pixel = array.get<JsonObject>(i);
+            int r = pixel["r"];
+            int g = pixel["g"];
+            int b = pixel["b"];
+            pixels.setPixelColor(i, pixels.Color(r, g, b));
+            pixels.show();
+            delay(100);
         }
         Serial.println("Got:" + String(value));
         //thing.publish(thing.clientId() + "/rbgled/color", value);
